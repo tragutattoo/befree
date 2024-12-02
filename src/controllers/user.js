@@ -41,14 +41,12 @@ const getAllUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
 
-    console.log('Creating')
-
     const errors = validationResult(req)
     if(!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
     try {
-        const {name, email, password} = req.body
+        const {name, email, password, dateOfBirth, roles, cpf, phone, address} = req.body
 
         // Validação de email
         const existingUser = await User.findOne({email})
@@ -56,8 +54,32 @@ const createUser = async (req, res) => {
             return res.status(400).json({ message: 'Este email já está em uso.' })
         }
 
+        // Verificar se o CPF já está cadastrado
+        if (cpf) {
+            const existingCpf = await User.findOne({ cpf });
+            if (existingCpf) {
+                return res.status(400).json({ message: 'CPF já cadastrado' });
+            }
+        }
+
+        // Processar a foto de perfil
+        const profilePicture = req.file
+            ? {
+                  data: req.file.buffer,
+                  contentType: req.file.mimetype,
+              }
+            : undefined;
+
         // Criar e salvar novo usuario
-        const newUser = new User({name, email, password})
+        const newUser = new User({name,
+            email,
+            password,
+            dateOfBirth,
+            roles, // Deve ser o ID de uma função existente
+            cpf,
+            profilePicture,
+            phone,
+            address,})
         await newUser.save()
 
         res.status(201).json({message: 'Usuario cadastrado com sucesso', user: newUser})

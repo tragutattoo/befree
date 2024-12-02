@@ -1,12 +1,16 @@
+const {authenticate} = require('../middlewares/auth')
 const express = require('express')
 const { body, validationResult } = require('express-validator')
 const router = express.Router()
 const UserController = require('../controllers/user')
+const upload = require('../middlewares/upload')
 
 // Rotas de exemplo
 router.get('/', UserController.getAllUsers)
 
-router.post('/', [
+router.post('/', 
+    upload.single('profilePicture'),
+    [
     body('name').notEmpty().withMessage('Nome é obrigatório'),
     body('email')
         .notEmpty().withMessage('E-mail é obrigatório')
@@ -24,5 +28,9 @@ router.post('/login', [
 ],
     UserController.login
 )
+
+router.get('/profile', authenticate, (req, res) => {
+    return res.status(200).json({ message: 'Perfil do usuário', user: req.user });
+});
 
 module.exports = router
